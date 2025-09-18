@@ -347,9 +347,11 @@ async function initWeb3() {
     claimTokensBtn.addEventListener('click', claimTokens);
 
     // ---- 9. INITIALIZE ----
-    initWeb3().then(() => {
-        startGame();
-    });
 
+    // Start the game immediately
+    startGame();
+
+    // Initialize Web3 in the background to fetch high score and prepare for claiming
+    initWeb3();
 
 });
