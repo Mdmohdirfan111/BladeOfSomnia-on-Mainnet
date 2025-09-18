@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blade of Somnia</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="main-container">
+        <header class="game-title">
+            <h1>Blade of Somnia</h1>
+        </header>
+
+        <main class="content-area">
+            
+            <div id="wallet-section" class="card">
+                <button id="connectWalletBtn">Connect Wallet</button>
+                <p id="playerAddress" class="hidden"></p>
+                <p id="wokeBalance" class="hidden"></p>
+            </div>
+
+            <div id="controls-section" class="card hidden">
+                <button id="gmBtn">GM On-chain</button>
+                <a href="game.html" id="startGameBtn">Start Slashing!</a>
+            </div>
+
+            <div id="leaderboard-section" class="card">
+                <h2>Top Slashers</h2>
+                <div id="leaderboard-loading">Loading high scores...</div>
+                <ol id="leaderboard-list">
+                    </ol>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    
+    <script src="wallet.js"></script>
+    </body>
+</html>

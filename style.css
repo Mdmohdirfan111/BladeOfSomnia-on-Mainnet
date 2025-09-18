@@ -1,0 +1,144 @@
+/* ---- GLOBAL STYLES & WOODEN BACKGROUND ---- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'IM Fell English SC', serif;
+    background-color: #382a1d; /* Fallback color */
+    /* Main wooden background texture */
+    background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+    color: #f3e5d8; /* Light cream color for text */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* ---- MAIN CONTAINER & LAYOUT ---- */
+.main-container {
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+}
+
+.game-title h1 {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: 4rem; /* Bada aur impressive title */
+    color: #ffc477; /* Golden color */
+    text-shadow: 4px 4px 8px #000; /* Text ko 3D look dene ke liye shadow */
+    margin-bottom: 30px;
+}
+
+/* ---- CARDS (Wooden Panels) ---- */
+.card {
+    background-color: rgba(61, 41, 30, 0.7); /* Thoda transparent dark wood color */
+    border: 5px ridge #754c29; /* Lakdi ka carved border */
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    /* Inset shadow se aisa lagega jaise card andar ki taraf hai */
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6), 0 5px 15px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px); /* Background ko thoda blur karega */
+}
+
+/* ---- BUTTONS & INTERACTIVE ELEMENTS ---- */
+button, #startGameBtn {
+    font-family: 'IM Fell English SC', serif;
+    font-size: 1.2rem;
+    color: #f3e5d8;
+    background-color: #5a3825; /* Darker wood for buttons */
+    border: 3px solid #8c6239;
+    padding: 12px 25px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    margin: 5px;
+}
+
+button:hover, #startGameBtn:hover {
+    background-color: #754c29; /* Hover par thoda light color */
+    border-color: #ffc477;
+    transform: translateY(-2px); /* Button thoda upar uthega */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+}
+
+button:active, #startGameBtn:active {
+    transform: translateY(1px); /* Click karne par dabne ka effect */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* "Start Slashing" button ko special look */
+#startGameBtn {
+    background-color: #8c2f1b; /* Reddish wood color */
+    border-color: #c04a32;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+#startGameBtn:hover {
+    background-color: #a63f2d;
+    border-color: #ffc477;
+}
+
+/* ---- WALLET & LEADERBOARD SPECIFIC STYLES ---- */
+#playerAddress {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #ffc477;
+    word-wrap: break-word; /* Lambe address ko wrap karega */
+}
+
+#wokeBalance {
+    margin-top: 5px;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.leaderboard h2 {
+    font-family: 'Cinzel Decorative', cursive;
+    margin-bottom: 15px;
+}
+
+#leaderboard-list {
+    list-style: none; /* list ke dots hatane ke liye */
+    padding: 0;
+}
+
+#leaderboard-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 2px dotted #754c29;
+    font-size: 1.1rem;
+}
+
+#leaderboard-list li:last-child {
+    border-bottom: none; /* Aakhri entry ke neeche border nahi */
+}
+
+.rank {
+    font-weight: bold;
+    color: #ffc477;
+}
+.address {
+    flex-grow: 1;
+    text-align: left;
+    margin: 0 15px;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Address lamba ho to ... dikhayega */
+    white-space: nowrap;
+}
+.score {
+    font-weight: bold;
+}
+
+/* ---- HELPER CLASS ---- */
+.hidden {
+    display: none;
+}
