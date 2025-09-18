@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Global Game Variables
     let score = 0, highScore = 0, isGameOver = false, isSlashing = false, gameStartTime, speedMultiplier;
     let coins = [], bombs = [], slashes = [], slicedPieces = [];
-   const gravity = 0.06; // Slightly stronger gravity for a better arc
-    const initialSpawnRate = 1200; // Yeh line add karni hai
+    const gravity = 0.06;
+    const initialSpawnRate = 1200;
     const coinTypes = {
         btc: { r: 40, s: 100 }, eth: { r: 40, s: 100 }, bnb: { r: 38, s: 80 }, sol: { r: 38, s: 80 }, xrp: { r: 35, s: 70 }, ada: { r: 35, s: 70 }, doge: { r: 32, s: 50 }, shib: { r: 32, s: 50 }, pepe: { r: 30, s: 40 }, link: { r: 35, s: 60 }, dot: { r: 35, s: 60 }, uni: { r: 35, s: 60 }, near: { r: 35, s: 60 }, ltc: { r: 35, s: 60 }, bch: { r: 35, s: 60 }, avax: { r: 35, s: 60 }, tron: { r: 35, s: 60 }, trx: { r: 35, s: 60 }, xlm: { r: 35, s: 60 }, hbar: { r: 35, s: 60 }, sui: { r: 35, s: 60 }, usdt: { r: 30, s: 10 }, udsc: { r: 30, s: 10 }
     };
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Game Logic & Classes
     class FlyingObject {
         constructor(x, y, vx, vy, radius) { this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.radius = radius; }
-        update() { this.vy += gravity; this.x += this.vx; this.y += this.vy; } // Corrected Physics: Gravity is now constant
+        update() { this.vy += gravity; this.x += this.vx; this.y += this.vy; }
     }
     class Coin extends FlyingObject {
         constructor(x, y, vx, vy, type) { const d = coinTypes[type]; super(x, y, vx, vy, d.r); this.type = type; this.score = d.s; }
@@ -61,7 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
         draw() { ctx.drawImage(images.bomb, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2); }
     }
     class SlicedCoinPiece extends FlyingObject {
-        constructor(x, y, vx, vy, type, isLeft) { super(x, y, vx, vy, coinTypes[type].r); this.type = type; this.isLeft = isLeft; this.angle = 0; this.rotationSpeed = (Math.random() - 0.5) * 0.2; }
+        constructor(x, y, vx, vy, type, isLeft) { 
+            super(x, y, vx, vy, coinTypes[type].r); 
+            this.type = type; 
+            this.isLeft = isLeft; 
+            this.angle = 0; 
+            this.rotationSpeed = (Math.random() - 0.5) * 0.2; 
+        }
         update() { super.update(); this.angle += this.rotationSpeed; }
         draw() {
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle); const img = images[this.type]; const size = this.radius * 2;
@@ -71,12 +77,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function showLobby() { lobbyContainer.classList.remove('hidden'); gameContainer.classList.add('hidden'); updateWokeBalance(wokeBalanceEl); }
+    function showLobby() { 
+        lobbyContainer.classList.remove('hidden'); 
+        gameContainer.classList.add('hidden'); 
+        updateWokeBalance(wokeBalanceEl); 
+        // Full reset on lobby show
+        score = 0; highScore = 0; isGameOver = false; coins = []; bombs = []; slicedPieces = []; slashes = [];
+        updateScore();
+    }
 
     function startCountdown() {
         lobbyContainer.classList.add('hidden');
         gameContainer.classList.remove('hidden');
+        // Handle resize
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        });
         countdownEl.classList.remove('hidden');
         let count = 3;
         countdownEl.textContent = count;
@@ -96,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function startGame() {
         loadImages().then(() => {
-            score = 0; isGameOver = false; coins = []; bombs = []; slicedPieces = []; speedMultiplier = 1;
+            score = 0; isGameOver = false; coins = []; bombs = []; slicedPieces = []; slashes = []; speedMultiplier = 1;
             updateScore(); gameOverModal.classList.add('hidden'); claimTokensBtn.disabled = false; claimStatus.textContent = '';
             gameStartTime = Date.now();
             gameLoop();
@@ -104,69 +121,166 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(error => { console.error(error); alert("Could not load game images. Please check the file names and refresh."); });
     }
     
-    function endGame() { isGameOver = true; if (score > highScore) { highScore = score; highScoreDisplay.textContent = `High Score: ${highScore}`; } finalScoreEl.textContent = score; gameOverModal.classList.remove('hidden'); }
+    function endGame() { 
+        isGameOver = true; 
+        if (score > highScore) { 
+            highScore = score; 
+            highScoreDisplay.textContent = `High Score: ${highScore}`; 
+        } 
+        finalScoreEl.textContent = score; 
+        gameOverModal.classList.remove('hidden'); 
+    }
 
     function gameLoop() {
         if (isGameOver) return;
-        speedMultiplier = 1 + (Date.now() - gameStartTime) / 45000; // Speed increases over 45 seconds
+        const elapsed = Date.now() - gameStartTime;
+        speedMultiplier = Math.min(1.8, 1 + elapsed / 60000); // Slower ramp-up, cap at 1.8x over 60s
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         [...coins, ...bombs, ...slicedPieces].forEach(item => { item.update(); item.draw(); });
-        coins = coins.filter(coin => coin.y < canvas.height + 100); bombs = bombs.filter(bomb => bomb.y < canvas.height + 100); slicedPieces = slicedPieces.filter(piece => piece.y < canvas.height + 100);
-        if (isSlashing && slashes.length > 1) { ctx.strokeStyle = 'white'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(slashes[0].x, slashes[0].y); for (let i = 1; i < slashes.length; i++) ctx.lineTo(slashes[i].x, slashes[i].y); ctx.stroke(); }
+        // Filter off-screen (y > height + buffer for falling)
+        coins = coins.filter(coin => coin.y < canvas.height + 200);
+        bombs = bombs.filter(bomb => bomb.y < canvas.height + 200);
+        slicedPieces = slicedPieces.filter(piece => piece.y < canvas.height + 200);
+        // Draw slash trail
+        if (isSlashing && slashes.length > 1) { 
+            ctx.strokeStyle = 'white'; 
+            ctx.lineWidth = 5; 
+            ctx.beginPath(); 
+            ctx.moveTo(slashes[0].x, slashes[0].y); 
+            for (let i = 1; i < slashes.length; i++) ctx.lineTo(slashes[i].x, slashes[i].y); 
+            ctx.stroke(); 
+        }
         requestAnimationFrame(gameLoop);
     }
 
     function spawnItem() {
         if (isGameOver) return;
         const elapsedTime = Date.now() - gameStartTime;
-        const waveSize = 1 + Math.floor(elapsedTime / 15000); // Add a new item to the wave every 15 seconds
+        const waveSize = Math.min(3, 1 + Math.floor(elapsedTime / 30000)); // Slower wave increase, every 30s, cap at 3
         for (let i = 0; i < waveSize; i++) {
-            const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
+            // Center-focused spawn: 30%-70% width
+            const x = Math.random() * canvas.width * 0.4 + canvas.width * 0.3;
             const y = canvas.height + 50;
-            const vx = (Math.random() * 6 - 3) * speedMultiplier;
-            const vy = -(Math.random() * 4 + 8) * speedMultiplier; // Speed aur height kam kar di
-            if (Math.random() < (0.15 + elapsedTime / 200000)) { bombs.push(new Bomb(x, y, vx, vy)); }
-            else { const type = coinKeys[Math.floor(Math.random() * coinKeys.length)]; coins.push(new Coin(x, y, vx, vy, type)); }
+            // Stronger horizontal vx for crossing screen like Fruit Ninja
+            const vx = (Math.random() * 8 - 4) * speedMultiplier; // -4 to 4, wider range
+            const vy = -(Math.random() * 3 + 6) * speedMultiplier; // Slightly less initial up speed
+            if (Math.random() < (0.1 + elapsedTime / 300000)) { // Rarer bombs
+                bombs.push(new Bomb(x, y, vx, vy));
+            }
+            else { 
+                const type = coinKeys[Math.floor(Math.random() * coinKeys.length)]; 
+                coins.push(new Coin(x, y, vx, vy, type)); 
+            }
         }
         launchSound.currentTime = 0; launchSound.play().catch(e => {});
-        const nextSpawnTime = Math.max(300, initialSpawnRate - (elapsedTime / 150));
+        // Gradual spawn rate decrease, min 800ms (not too fast)
+        const nextSpawnTime = Math.max(800, initialSpawnRate - (elapsedTime / 300));
         setTimeout(spawnItem, nextSpawnTime);
     }
 
     function updateScore() { scoreDisplay.textContent = `Score: ${score}`; if (score > highScore) highScoreDisplay.textContent = `High Score: ${score}`; }
-    function startSlash(e) { isSlashing = true; slashes = [{ x: e.offsetX, y: e.offsetY }]; }
-    function endSlash() { isSlashing = false; slashes = []; }
-    function moveSlash(e) { if (!isSlashing) return; const x = e.offsetX; const y = e.offsetY; slashes.push({ x, y }); if (slashes.length > 20) slashes.shift(); checkCollision(x, y); }
-    
-    function checkCollision(x, y) {
-        for (let i = coins.length - 1; i >= 0; i--) {
-            const coin = coins[i];
-            if (Math.hypot(x - coin.x, y - coin.y) < coin.radius) {
-                score += coin.score; updateScore(); sliceSound.currentTime = 0; sliceSound.play().catch(e => {});
-                slicedPieces.push(new SlicedCoinPiece(coin.x, coin.y, -2 * speedMultiplier, coin.vy/2, coin.type, true), new SlicedCoinPiece(coin.x, coin.y, 2 * speedMultiplier, coin.vy/2, coin.type, false));
-                coins.splice(i, 1);
+
+    function startSlash(e) { 
+        isSlashing = true; 
+        slashes = [{ x: e.offsetX, y: e.offsetY }]; 
+    }
+    function endSlash() { 
+        isSlashing = false; 
+        // Check collisions along the entire slash line on end (better for slicing)
+        if (slashes.length > 1) {
+            for (let i = 0; i < slashes.length - 1; i++) {
+                checkLineCollision(slashes[i], slashes[i+1]);
             }
         }
-        bombs.forEach(bomb => { if (Math.hypot(x - bomb.x, y - bomb.y) < bomb.radius) endGame(); });
+        slashes = []; 
+    }
+    function moveSlash(e) { 
+        if (!isSlashing) return; 
+        const x = e.offsetX; const y = e.offsetY; 
+        slashes.push({ x, y }); 
+        if (slashes.length > 20) slashes.shift(); 
+        // Quick point check during move for responsiveness
+        checkCollision(x, y);
+    }
+    
+    // Improved collision: Point distance + line segment distance
+    function distanceToLine(px, py, x1, y1, x2, y2) {
+        const A = px - x1;
+        const B = py - y1;
+        const C = x2 - x1;
+        const D = y2 - y1;
+        const dot = A * C + B * D;
+        const lenSq = C * C + D * D;
+        if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+        const param = dot / lenSq;
+        let xx, yy;
+        if (param < 0) { xx = x1; yy = y1; }
+        else if (param > 1) { xx = x2; yy = y2; }
+        else { xx = x1 + param * C; yy = y1 + param * D; }
+        return Math.hypot(px - xx, py - yy);
+    }
+
+    function checkCollision(x, y) {
+        checkLineCollision({x, y}, {x, y}); // Degenerate line for point
+    }
+
+    function checkLineCollision(p1, p2) {
+        for (let i = coins.length - 1; i >= 0; i--) {
+            const coin = coins[i];
+            const dist = distanceToLine(coin.x, coin.y, p1.x, p1.y, p2.x, p2.y);
+            if (dist < coin.radius) {
+                score += coin.score; updateScore(); sliceSound.currentTime = 0; sliceSound.play().catch(e => {});
+                // Better piece physics: Keep original vy, add scatter to vx
+                slicedPieces.push(
+                    new SlicedCoinPiece(coin.x, coin.y, coin.vx - 3 * speedMultiplier, coin.vy, coin.type, true),
+                    new SlicedCoinPiece(coin.x, coin.y, coin.vx + 3 * speedMultiplier, coin.vy, coin.type, false)
+                );
+                coins.splice(i, 1);
+                break; // One slice per segment to avoid double-count
+            }
+        }
+        // Bombs: Check line too
+        bombs.forEach((bomb, idx) => { 
+            const dist = distanceToLine(bomb.x, bomb.y, p1.x, p1.y, p2.x, p2.y);
+            if (dist < bomb.radius) { 
+                endGame(); 
+                bombs.splice(idx, 1); // Remove bomb after hit
+            }
+        });
     }
 
     async function claimTokens() {
         if (score === 0) return claimStatus.textContent = "Score is 0, nothing to claim.";
         if (!contract) return claimStatus.textContent = "Wallet not connected.";
         claimTokensBtn.disabled = true; claimStatus.textContent = 'Preparing transaction...';
-        try { const tx = await contract.claimTokens(score); claimStatus.textContent = `Claiming... Tx sent.`; await tx.wait(); claimStatus.textContent = `Success! ${score} $WOKE tokens claimed.`; updateWokeBalance(wokeBalanceEl); }
-        catch (error) { console.error("Token claim failed:", error); claimStatus.textContent = 'Transaction failed.'; claimTokensBtn.disabled = false; }
+        try { 
+            const tx = await contract.claimTokens(score); 
+            claimStatus.textContent = `Claiming... Tx sent.`; 
+            await tx.wait(); 
+            claimStatus.textContent = `Success! ${score} $WOKE tokens claimed.`; 
+            updateWokeBalance(wokeBalanceEl); 
+            // Auto go to lobby after success
+            setTimeout(() => {
+                gameOverModal.classList.add('hidden');
+                showLobby();
+            }, 2000);
+        }
+        catch (error) { 
+            console.error("Token claim failed:", error); 
+            claimStatus.textContent = 'Transaction failed.'; 
+            claimTokensBtn.disabled = false; 
+        }
     }
 
     // Event Listeners
     connectWalletBtn.addEventListener('click', () => connectWallet(onWalletConnected));
     gmBtn.addEventListener('click', () => handleGm(gmBtn));
-    startGameBtn.addEventListener('click', startCountdown); // Changed to start countdown
+    startGameBtn.addEventListener('click', startCountdown);
     canvas.addEventListener('mousedown', startSlash);
     canvas.addEventListener('mousemove', moveSlash);
     canvas.addEventListener('mouseup', endSlash);
     canvas.addEventListener('mouseleave', endSlash);
-    playAgainBtn.addEventListener('click', startCountdown); // Changed to start countdown
+    playAgainBtn.addEventListener('click', startCountdown);
     claimTokensBtn.addEventListener('click', claimTokens);
     backToLobbyBtn.addEventListener('click', showLobby);
 });
