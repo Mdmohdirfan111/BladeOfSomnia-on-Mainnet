@@ -276,29 +276,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ---- 7. WEB3 & TOKEN CLAIMING ----
     
-    async function initWeb3() {
-        if (typeof window.ethereum === 'undefined') {
-            alert('Please connect your wallet in the Lobby first!');
-            window.location.href = 'index.html';
-            return;
-        }
-
-        try {
-            provider = new ethers.BrowserProvider(window.ethereum);
-            signer = await provider.getSigner();
-            userAccount = await signer.getAddress();
-            contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-            // Fetch on-chain high score
-            const onChainHighScore = await contract.getHighScore(userAccount);
-            highScore = Number(onChainHighScore);
-            highScoreDisplay.textContent = `High Score: ${highScore}`;
-            
-        } catch (error) {
-            console.error("Web3 init failed:", error);
-            alert('Could not connect to wallet. Please go back to the lobby and connect.');
-        }
+    // NAYA AUR BEHTAR CODE
+async function initWeb3() {
+    if (typeof window.ethereum === 'undefined') {
+        alert('MetaMask is not installed. Please install it to play.');
+        window.location.href = 'index.html';
+        return;
     }
+
+    try {
+        // Explicitly request accounts, in case we landed here directly
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        userAccount = accounts[0];
+
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        console.log("Wallet connected:", userAccount);
+
+        // Fetch on-chain high score
+        const onChainHighScore = await contract.getHighScore(userAccount);
+        highScore = Number(onChainHighScore);
+        highScoreDisplay.textContent = `High Score: ${highScore}`;
+        console.log("On-chain high score fetched:", highScore);
+        
+    } catch (error) {
+        console.error("Web3 initialization failed:", error);
+        alert('Could not connect to wallet. Please approve the connection in your wallet and refresh the page.');
+        // Stop the game from starting if web3 fails
+        isGameOver = true; // Set game to over state
+    }
+}
     
     async function claimTokens() {
         if (score === 0) {
@@ -341,5 +350,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initWeb3().then(() => {
         startGame();
     });
+
 
 });
