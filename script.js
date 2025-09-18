@@ -1,5 +1,5 @@
-// Import wallet functions from wallet.js
-import { connectWallet, updateWokeBalance, getOnChainHighScore, handleGm, contract } from './wallet.js';
+// Import wallet functions from wallet.js (signer and userAccount added)
+import { connectWallet, updateWokeBalance, getOnChainHighScore, handleGm, contract, signer, userAccount } from './wallet.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Global Game Variables ---
@@ -39,9 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const sliceSound = document.getElementById('sliceSound');
     
     // ================== LOBBY LOGIC ==================
+    // This function is now simpler because userAccount is imported directly
     function onWalletConnected() {
         connectWalletBtn.style.display = 'none';
-        const userAccount = ethers.getAddress(signer.address);
         const formattedAddress = `${userAccount.substring(0, 6)}...${userAccount.substring(userAccount.length - 4)}`;
         playerAddressEl.textContent = `Player: ${formattedAddress}`;
         playerAddressEl.classList.remove('hidden');
@@ -63,8 +63,22 @@ document.addEventListener('DOMContentLoaded', () => {
         constructor(x, y, vx, vy, radius) { this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.radius = radius; this.isSliced = false; }
         update() { this.vy += gravity * speedMultiplier; this.x += this.vx; this.y += this.vy; }
     }
-    class Coin extends FlyingObject { /* ... same as before ... */ }
-    class Bomb extends FlyingObject { /* ... same as before ... */ }
+    class Coin extends FlyingObject {
+        constructor(x, y, vx, vy, type) {
+            const d = coinTypes[type]; super(x, y, vx, vy, d.radius); this.color = d.color; this.score = d.score; this.type = type;
+        }
+        draw() {
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill();
+            ctx.fillStyle = 'white'; ctx.font = `bold ${this.radius*0.8}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(this.type.toUpperCase(), this.x, this.y);
+        }
+    }
+    class Bomb extends FlyingObject {
+        constructor(x, y, vx, vy) { super(x, y, vx, vy, 30); this.color = 'black'; }
+        draw() {
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill();
+        }
+    }
 
     function showLobby() {
         lobbyContainer.classList.remove('hidden');
@@ -93,42 +107,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function gameLoop() {
         if (isGameOver) return;
-        // Increase speed over time
-        speedMultiplier = 1 + (Date.now() - gameStartTime) / 30000; // Speed doubles every 30 seconds
-
+        speedMultiplier = 1 + (Date.now() - gameStartTime) / 30000;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         [...coins, ...bombs].forEach(item => { item.update(); item.draw(); });
-        // Cleanup off-screen items
-        coins = coins.filter(coin => coin.y < canvas.height + 100);
+        coins = coins.filter(coin => coin.y < canvas.height + 100 && !coin.isSliced);
         bombs = bombs.filter(bomb => bomb.y < canvas.height + 100);
-
-        if (isSlashing && slashes.length > 1) { /* ... same as before ... */ }
+        if (isSlashing && slashes.length > 1) {
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(slashes[0].x, slashes[0].y);
+            for (let i = 1; i < slashes.length; i++) ctx.lineTo(slashes[i].x, slashes[i].y);
+            ctx.stroke();
+        }
         requestAnimationFrame(gameLoop);
     }
 
     function spawnItem() {
         if (isGameOver) return;
-        const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1; // Avoid spawning at very edges
+        const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
         const y = canvas.height + 50;
         const vx = (Math.random() * 6 - 3) * speedMultiplier;
-        const vy = -(Math.random() * 5 + 12) * speedMultiplier; // Stronger upward launch
-
+        const vy = -(Math.random() * 5 + 12) * speedMultiplier;
         if (Math.random() < 0.2) { bombs.push(new Bomb(x, y, vx, vy)); } 
         else { const type = coinKeys[Math.floor(Math.random() * coinKeys.length)]; coins.push(new Coin(x, y, vx, vy, type)); }
-        
-        launchSound.currentTime = 0;
-        launchSound.play();
-
+        launchSound.currentTime = 0; launchSound.play().catch(e => console.log("Sound play interrupted"));
         const elapsedTime = Date.now() - gameStartTime;
-        const nextSpawnTime = Math.max(200, initialSpawnRate - (elapsedTime / 120)); // Spawn rate increases faster
+        const nextSpawnTime = Math.max(200, initialSpawnRate - (elapsedTime / 120));
         setTimeout(spawnItem, nextSpawnTime);
     }
 
-    function updateScore() { /* ... same as before ... */ }
+    function updateScore() {
+        scoreDisplay.textContent = `Score: ${score}`;
+        if (score > highScore) highScoreDisplay.textContent = `High Score: ${score}`;
+    }
     
-    function startSlash(e) { /* ... same as before ... */ }
-    function endSlash() { /* ... same as before ... */ }
-    function moveSlash(e) { /* ... same as before ... */ }
+    function startSlash(e) { isSlashing = true; slashes = [{ x: e.offsetX, y: e.offsetY }]; }
+    function endSlash() { isSlashing = false; slashes = []; }
+    function moveSlash(e) {
+        if (!isSlashing) return;
+        const x = e.offsetX; const y = e.offsetY;
+        slashes.push({ x, y });
+        if (slashes.length > 20) slashes.shift();
+        checkCollision(x, y);
+    }
     
     function checkCollision(x, y) {
         coins.forEach(coin => {
@@ -137,13 +156,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 score += coin.score;
                 updateScore();
                 sliceSound.currentTime = 0;
-                sliceSound.play();
+                sliceSound.play().catch(e => console.log("Sound play interrupted"));
             }
         });
         bombs.forEach(bomb => { if (Math.hypot(x - bomb.x, y - bomb.y) < bomb.radius) endGame(); });
     }
 
-    async function claimTokens() { /* ... same as before ... */ }
+    async function claimTokens() {
+        if (score === 0) return claimStatus.textContent = "Score is 0, nothing to claim.";
+        if (!contract) return claimStatus.textContent = "Wallet not connected.";
+        claimTokensBtn.disabled = true;
+        claimStatus.textContent = 'Preparing transaction...';
+        try {
+            const tx = await contract.claimTokens(score);
+            claimStatus.textContent = `Claiming... Tx sent.`;
+            await tx.wait();
+            claimStatus.textContent = `Success! ${score} $WOKE tokens claimed.`;
+            updateWokeBalance(wokeBalanceEl);
+        } catch (error) {
+            console.error("Token claim failed:", error);
+            claimStatus.textContent = 'Transaction failed.';
+            claimTokensBtn.disabled = false;
+        }
+    }
 
     // ================== EVENT LISTENERS ==================
     connectWalletBtn.addEventListener('click', () => connectWallet(onWalletConnected));
