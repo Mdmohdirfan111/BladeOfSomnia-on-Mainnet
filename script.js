@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
             const y = canvas.height + 50;
             const vx = (Math.random() * 6 - 3) * speedMultiplier;
-            const vy = -(Math.random() * 6 + 13) * speedMultiplier;
+            const vy = -(Math.random() * 4 + 8) * speedMultiplier; // Speed aur height kam kar di
             if (Math.random() < (0.15 + elapsedTime / 200000)) { bombs.push(new Bomb(x, y, vx, vy)); }
             else { const type = coinKeys[Math.floor(Math.random() * coinKeys.length)]; coins.push(new Coin(x, y, vx, vy, type)); }
         }
