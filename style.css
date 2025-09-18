@@ -16,9 +16,10 @@ body {
     align-items: center;
     min-height: 100vh;
     padding: 20px;
+    overflow: hidden; /* Page ko scroll hone se rokega */
 }
 
-/* ---- MAIN CONTAINER & LAYOUT ---- */
+/* ---- INDEX.HTML (LOBBY) STYLES ---- */
 .main-container {
     width: 100%;
     max-width: 600px;
@@ -33,19 +34,16 @@ body {
     margin-bottom: 30px;
 }
 
-/* ---- CARDS (Wooden Panels) ---- */
 .card {
     background-color: rgba(61, 41, 30, 0.7); /* Thoda transparent dark wood color */
     border: 5px ridge #754c29; /* Lakdi ka carved border */
     border-radius: 15px;
     padding: 25px;
     margin-bottom: 25px;
-    /* Inset shadow se aisa lagega jaise card andar ki taraf hai */
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6), 0 5px 15px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(3px); /* Background ko thoda blur karega */
 }
 
-/* ---- BUTTONS & INTERACTIVE ELEMENTS ---- */
 button, #startGameBtn {
     font-family: 'IM Fell English SC', serif;
     font-size: 1.2rem;
@@ -74,7 +72,6 @@ button:active, #startGameBtn:active {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-/* "Start Slashing" button ko special look */
 #startGameBtn {
     background-color: #8c2f1b; /* Reddish wood color */
     border-color: #c04a32;
@@ -86,12 +83,11 @@ button:active, #startGameBtn:active {
     border-color: #ffc477;
 }
 
-/* ---- WALLET & LEADERBOARD SPECIFIC STYLES ---- */
 #playerAddress {
     margin-top: 15px;
     font-size: 0.9rem;
     color: #ffc477;
-    word-wrap: break-word; /* Lambe address ko wrap karega */
+    word-wrap: break-word;
 }
 
 #wokeBalance {
@@ -100,13 +96,8 @@ button:active, #startGameBtn:active {
     font-weight: bold;
 }
 
-.leaderboard h2 {
-    font-family: 'Cinzel Decorative', cursive;
-    margin-bottom: 15px;
-}
-
 #leaderboard-list {
-    list-style: none; /* list ke dots hatane ke liye */
+    list-style: none;
     padding: 0;
 }
 
@@ -119,24 +110,95 @@ button:active, #startGameBtn:active {
 }
 
 #leaderboard-list li:last-child {
-    border-bottom: none; /* Aakhri entry ke neeche border nahi */
+    border-bottom: none;
 }
 
-.rank {
-    font-weight: bold;
+.rank { font-weight: bold; color: #ffc477; }
+.address { flex-grow: 1; text-align: left; margin: 0 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score { font-weight: bold; }
+
+/* ---- GAME.HTML & MODAL STYLES ---- */
+.game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#gameCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.ui-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.8rem;
+    text-shadow: 2px 2px 4px #000;
+}
+
+.game-stat {
+    background-color: rgba(0,0,0,0.3);
+    padding: 10px 15px;
+    border-radius: 10px;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+}
+
+.modal-title {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: 3rem;
+    color: #ffc477;
+    text-shadow: 2px 2px 6px #000;
+}
+
+.final-score {
+    font-size: 2rem;
+    margin: 20px 0;
+}
+
+.claim-status {
+    margin-top: 15px;
+    min-height: 20px;
+    font-size: 1rem;
     color: #ffc477;
 }
-.address {
-    flex-grow: 1;
-    text-align: left;
-    margin: 0 15px;
-    overflow: hidden;
-    text-overflow: ellipsis; /* Address lamba ho to ... dikhayega */
-    white-space: nowrap;
+
+.back-link {
+    display: block;
+    margin-top: 20px;
+    color: #f3e5d8;
+    text-decoration: none;
 }
-.score {
-    font-weight: bold;
+.back-link:hover {
+    text-decoration: underline;
 }
+
 
 /* ---- HELPER CLASS ---- */
 .hidden {
