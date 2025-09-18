@@ -35,16 +35,43 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const coinKeys = Object.keys(coinTypes);
 
+    // Leaderboard Function (Assume contract has getTopScores(count) returning [{address, score}, ...])
+    async function getTopHighScores(count = 10) {
+        if (!contract) return [];
+        try {
+            return await contract.getTopScores(count);
+        } catch (error) {
+            console.error('Failed to fetch top scores:', error);
+            return [];
+        }
+    }
+
+    function populateLeaderboard(scores) {
+        leaderboardListEl.innerHTML = '';
+        if (scores.length === 0) {
+            leaderboardListEl.innerHTML = '<li>No scores available.</li>';
+            return;
+        }
+        scores.forEach((entry, index) => {
+            const li = document.createElement('li');
+            const formattedAddr = `${entry.address.substring(0, 6)}...${entry.address.substring(entry.address.length - 4)}`;
+            li.textContent = `${index + 1}. ${formattedAddr}: ${entry.score}`;
+            leaderboardListEl.appendChild(li);
+        });
+    }
+
     // Lobby Logic
-    function onWalletConnected() {
+    async function onWalletConnected() {
         connectWalletBtn.style.display = 'none';
         const formattedAddress = `${userAccount.substring(0, 6)}...${userAccount.substring(userAccount.length - 4)}`;
         playerAddressEl.textContent = `Player: ${formattedAddress}`;
         playerAddressEl.classList.remove('hidden'); wokeBalanceEl.classList.remove('hidden'); controlsSection.classList.remove('hidden');
         updateWokeBalance(wokeBalanceEl);
         getOnChainHighScore().then(hs => { highScore = hs; highScoreDisplay.textContent = `High Score: ${highScore}`; });
+        leaderboardLoadingEl.style.display = 'block';
+        const topScores = await getTopHighScores(10);
         leaderboardLoadingEl.style.display = 'none';
-        leaderboardListEl.innerHTML = `<li>Leaderboard feature is under construction.</li>`;
+        populateLeaderboard(topScores);
     }
 
     // Game Logic & Classes
@@ -84,6 +111,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Full reset on lobby show
         score = 0; highScore = 0; isGameOver = false; coins = []; bombs = []; slicedPieces = []; slashes = [];
         updateScore();
+        // Stop sounds
+        launchSound.pause(); launchSound.currentTime = 0;
+        sliceSound.pause(); sliceSound.currentTime = 0;
     }
 
     function startCountdown() {
@@ -129,12 +159,21 @@ document.addEventListener('DOMContentLoaded', () => {
         } 
         finalScoreEl.textContent = score; 
         gameOverModal.classList.remove('hidden'); 
+        // Stop sounds on game over
+        launchSound.pause(); launchSound.currentTime = 0;
+        sliceSound.pause(); sliceSound.currentTime = 0;
+        // Compulsory auto-claim if score > 0 and wallet connected
+        if (score > 0 && contract) {
+            setTimeout(() => {
+                claimTokens(true); // true for auto
+            }, 1000);
+        }
     }
 
     function gameLoop() {
         if (isGameOver) return;
         const elapsed = Date.now() - gameStartTime;
-        speedMultiplier = Math.min(1.8, 1 + elapsed / 60000); // Slower ramp-up, cap at 1.8x over 60s
+        speedMultiplier = Math.min(1.5, 1 + elapsed / 90000); // Even slower ramp-up, cap at 1.5x over 90s
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         [...coins, ...bombs, ...slicedPieces].forEach(item => { item.update(); item.draw(); });
         // Filter off-screen (y > height + buffer for falling)
@@ -156,14 +195,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function spawnItem() {
         if (isGameOver) return;
         const elapsedTime = Date.now() - gameStartTime;
-        const waveSize = Math.min(3, 1 + Math.floor(elapsedTime / 30000)); // Slower wave increase, every 30s, cap at 3
+        const waveSize = Math.min(2, 1 + Math.floor(elapsedTime / 45000)); // Even slower wave increase, every 45s, cap at 2
         for (let i = 0; i < waveSize; i++) {
-            // Center-focused spawn: 30%-70% width
-            const x = Math.random() * canvas.width * 0.4 + canvas.width * 0.3;
+            // Exact center spawn, directional to sides
+            const x = canvas.width / 2;
             const y = canvas.height + 50;
-            // Stronger horizontal vx for crossing screen like Fruit Ninja
-            const vx = (Math.random() * 8 - 4) * speedMultiplier; // -4 to 4, wider range
-            const vy = -(Math.random() * 3 + 6) * speedMultiplier; // Slightly less initial up speed
+            // Strong directional vx to sides: left or right
+            const direction = Math.random() < 0.5 ? -1 : 1;
+            const vx = direction * (3 + Math.random() * 5) * speedMultiplier; // 3-8 to one side
+            const vy = -(Math.random() * 3 + 5) * speedMultiplier; // Adjusted for better arc
             if (Math.random() < (0.1 + elapsedTime / 300000)) { // Rarer bombs
                 bombs.push(new Bomb(x, y, vx, vy));
             }
@@ -172,9 +212,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 coins.push(new Coin(x, y, vx, vy, type)); 
             }
         }
-        launchSound.currentTime = 0; launchSound.play().catch(e => {});
-        // Gradual spawn rate decrease, min 800ms (not too fast)
-        const nextSpawnTime = Math.max(800, initialSpawnRate - (elapsedTime / 300));
+        if (launchSound && !launchSound.ended) {
+            launchSound.currentTime = 0; 
+            launchSound.play().catch(e => console.log('Launch sound play failed:', e));
+        }
+        // Slower spawn rate, min 1000ms
+        const nextSpawnTime = Math.max(1000, initialSpawnRate - (elapsedTime / 400));
         setTimeout(spawnItem, nextSpawnTime);
     }
 
@@ -229,7 +272,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const coin = coins[i];
             const dist = distanceToLine(coin.x, coin.y, p1.x, p1.y, p2.x, p2.y);
             if (dist < coin.radius) {
-                score += coin.score; updateScore(); sliceSound.currentTime = 0; sliceSound.play().catch(e => {});
+                score += coin.score; updateScore(); 
+                if (sliceSound && !sliceSound.ended) {
+                    sliceSound.currentTime = 0; sliceSound.play().catch(e => console.log('Slice sound play failed:', e));
+                }
                 // Better piece physics: Keep original vy, add scatter to vx
                 slicedPieces.push(
                     new SlicedCoinPiece(coin.x, coin.y, coin.vx - 3 * speedMultiplier, coin.vy, coin.type, true),
@@ -240,35 +286,52 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         // Bombs: Check line too
-        bombs.forEach((bomb, idx) => { 
+        for (let idx = bombs.length - 1; idx >= 0; idx--) {
+            const bomb = bombs[idx];
             const dist = distanceToLine(bomb.x, bomb.y, p1.x, p1.y, p2.x, p2.y);
             if (dist < bomb.radius) { 
                 endGame(); 
                 bombs.splice(idx, 1); // Remove bomb after hit
+                break;
             }
-        });
+        }
     }
 
-    async function claimTokens() {
-        if (score === 0) return claimStatus.textContent = "Score is 0, nothing to claim.";
-        if (!contract) return claimStatus.textContent = "Wallet not connected.";
-        claimTokensBtn.disabled = true; claimStatus.textContent = 'Preparing transaction...';
+    async function claimTokens(auto = false) {
+        if (score === 0) {
+            if (auto) showLobby();
+            else claimStatus.textContent = "Score is 0, nothing to claim.";
+            return;
+        }
+        if (!contract) {
+            if (auto) showLobby();
+            else claimStatus.textContent = "Wallet not connected.";
+            return;
+        }
+        if (!auto) {
+            claimTokensBtn.disabled = true; 
+        }
+        claimStatus.textContent = 'Preparing transaction...';
         try { 
             const tx = await contract.claimTokens(score); 
             claimStatus.textContent = `Claiming... Tx sent.`; 
             await tx.wait(); 
             claimStatus.textContent = `Success! ${score} $WOKE tokens claimed.`; 
             updateWokeBalance(wokeBalanceEl); 
-            // Auto go to lobby after success
+            // Auto go to lobby after success (for both auto and manual)
             setTimeout(() => {
                 gameOverModal.classList.add('hidden');
                 showLobby();
-            }, 2000);
+            }, auto ? 1500 : 2000);
         }
         catch (error) { 
             console.error("Token claim failed:", error); 
-            claimStatus.textContent = 'Transaction failed.'; 
-            claimTokensBtn.disabled = false; 
+            claimStatus.textContent = 'Transaction failed. Please try again.'; 
+            if (!auto) claimTokensBtn.disabled = false;
+            else {
+                // Even on fail, go to lobby after delay
+                setTimeout(showLobby, 2000);
+            }
         }
     }
 
@@ -281,6 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.addEventListener('mouseup', endSlash);
     canvas.addEventListener('mouseleave', endSlash);
     playAgainBtn.addEventListener('click', startCountdown);
-    claimTokensBtn.addEventListener('click', claimTokens);
+    claimTokensBtn.addEventListener('click', () => claimTokens(false));
     backToLobbyBtn.addEventListener('click', showLobby);
 });
