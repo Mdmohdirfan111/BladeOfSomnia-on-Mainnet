@@ -120,24 +120,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ---- 5. CORE GAME LOGIC ----
 
-    function startGame() {
-        // Reset game state
-        score = 0;
-        isGameOver = false;
-        coins = [];
-        bombs = [];
-        updateScore();
-        
-        gameOverModal.classList.add('hidden');
-        claimTokensBtn.disabled = false;
-        claimStatus.textContent = '';
+function startGame() {
+    // Reset game state
+    score = 0;
+    isGameOver = false;
+    coins = [];
+    bombs = [];
+    updateScore();
+    
+    gameOverModal.classList.add('hidden');
+    claimTokensBtn.disabled = false;
+    claimStatus.textContent = '';
 
-        gameStartTime = Date.now();
-        gameLoop();
-        
-        // Start spawning items
-        setTimeout(spawnItem, initialSpawnRate);
-    }
+    // YEH LINE SABSE ZAROORI HAI
+    gameStartTime = Date.now();
+    
+    // Game loop shuru karo
+    gameLoop();
+    
+    // Pehla coin/bomb spawn karne ke liye command do
+    setTimeout(spawnItem, initialSpawnRate);
+}
     
     function endGame() {
         isGameOver = true;
@@ -355,3 +358,4 @@ async function initWeb3() {
     initWeb3();
 
 });
+
