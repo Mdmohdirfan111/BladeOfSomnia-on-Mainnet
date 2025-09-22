@@ -91,3 +91,16 @@ export async function handleGm(gmBtn) {
         gmBtn.textContent = 'GM On-chain';
     }
 }
+
+// NEW FEATURE: Disconnect Wallet Logic
+export function disconnectWallet() {
+    // Clear the stored variables
+    provider = null;
+    signer = null;
+    contract = null;
+    userAccount = null;
+    console.log("Disconnected wallet state.");
+
+    // Reload the page to reset the UI to its initial state
+    window.location.reload();
+}
