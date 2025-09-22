@@ -4,62 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blade of Somnia</title>
-    <style>
-        body { margin: 0; font-family: 'IM Fell English SC', serif; background: black; color: white; overflow: hidden; }
-        #lobby-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        #game-container { display: none; position: relative; }
-        canvas { display: block; }
-        #countdown { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 48px; }
-        #scoreDisplay, #highScoreDisplay { position: absolute; top: 10px; font-size: 24px; }
-        #scoreDisplay { left: 10px; } #highScoreDisplay { right: 10px; }
-        #gameOverModal { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 10px; text-align: center; }
-        .hidden { display: none; }
-        button { font-family: 'IM Fell English SC', serif; font-size: 18px; padding: 10px 20px; margin: 10px; cursor: pointer; background: #333; color: white; border: none; border-radius: 5px; }
-        button:hover { background: #555; }
-        #controls-section { display: none; }
-        #leaderboard-loading { display: none; }
-        #leaderboard-list { list-style: none; padding: 0; }
-        #leaderboard-list li { margin: 5px 0; }
-        #playerAddress, #wokeBalance { margin: 10px; font-size: 18px; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="lobby-container">
-        <h1>Blade of Somnia</h1>
-        <div>
+    <div class="main-container">
+        <div class="game-title">
+            <h1>Blade of Somnia</h1>
+        </div>
+        <div class="card">
             <button id="connectWalletBtn">Connect Wallet</button>
             <button id="disconnectWalletBtn" class="hidden">Disconnect Wallet</button>
             <p id="playerAddress" class="hidden"></p>
             <p id="wokeBalance" class="hidden">Balance: 0 $WOKE</p>
         </div>
-        <div id="controls-section" class="hidden">
+        <div class="card" id="controls-section" class="hidden">
             <button id="gmBtn">GM On-chain</button>
             <button id="startGameBtn">Start Slashing!</button>
         </div>
-        <div>
+        <div class="card">
             <h2>Top Slashers</h2>
             <p id="leaderboard-loading">Loading high scores...</p>
             <ul id="leaderboard-list"></ul>
         </div>
-        <div>
-            <p>Developed by Irfan.eth</p>
-            <a href="https://x.com/irfan" target="_blank">Follow Irfan</a> |
-            <a href="https://x.com/somnia" target="_blank">Follow Somnia</a> |
-            <a href="https://discord.com/somnia" target="_blank">Join Discord</a>
+        <div class="card social-links-card">
+            <p class="developer-credit">Developed by Irfan.eth</p>
+            <ul>
+                <li><a href="https://x.com/irfan" target="_blank">Follow Irfan</a></li>
+                <li><a href="https://x.com/somnia" target="_blank">Follow Somnia</a></li>
+                <li><a href="https://discord.com/somnia" target="_blank">Join Discord</a></li>
+            </ul>
         </div>
     </div>
-    <div id="game-container">
+    <div class="game-container hidden" id="game-container">
         <canvas id="gameCanvas"></canvas>
+        <div class="ui-overlay">
+            <div class="game-stat" id="scoreDisplay">Score: 0</div>
+            <div class="game-stat" id="highScoreDisplay">High Score: 0</div>
+        </div>
         <div id="countdown" class="hidden"></div>
-        <div id="scoreDisplay">Score: 0</div>
-        <div id="highScoreDisplay">High Score: 0</div>
-        <div id="gameOverModal" class="hidden">
-            <h2>WOKE UP!</h2>
-            <p>Final Score: <span id="finalScore">0</span></p>
-            <button id="claimTokensBtn">Claim $WOKE</button>
-            <button id="playAgainBtn">Play Again</button>
-            <p id="claimStatus"></p>
-            <button id="backToLobbyBtn">Back to Lobby</button>
+        <div class="modal-overlay hidden" id="gameOverModal">
+            <div class="modal-content card">
+                <h2 class="modal-title">WOKE UP!</h2>
+                <p class="final-score">Final Score: <span id="finalScore">0</span></p>
+                <button id="claimTokensBtn">Claim $WOKE</button>
+                <button id="playAgainBtn">Play Again</button>
+                <p class="claim-status" id="claimStatus"></p>
+                <a class="back-link" id="backToLobbyBtn">Back to Lobby</a>
+            </div>
         </div>
     </div>
     <audio id="launchSound" src="launch.mp3"></audio>
