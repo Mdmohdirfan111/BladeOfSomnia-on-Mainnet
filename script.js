@@ -1,8 +1,8 @@
-import { connectWallet, disconnectWallet, updateWokeBalance, getOnChainHighScore, handleGm, contract, userAccount } from './wallet.js';
+import { connectWallet, updateWokeBalance, getOnChainHighScore, handleGm, contract, userAccount } from './wallet.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
-    const lobbyContainer = document.getElementById('lobby-container'), gameContainer = document.getElementById('game-container'), connectWalletBtn = document.getElementById('connectWalletBtn'), disconnectWalletBtn = document.getElementById('disconnectWalletBtn'), gmBtn = document.getElementById('gmBtn'), playerAddressEl = document.getElementById('playerAddress'), wokeBalanceEl = document.getElementById('wokeBalance'), controlsSection = document.getElementById('controls-section'), leaderboardLoadingEl = document.getElementById('leaderboard-loading'), leaderboardListEl = document.getElementById('leaderboard-list'), startGameBtn = document.getElementById('startGameBtn'), canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d'), countdownEl = document.getElementById('countdown'), scoreDisplay = document.getElementById('scoreDisplay'), highScoreDisplay = document.getElementById('highScoreDisplay'), gameOverModal = document.getElementById('gameOverModal'), finalScoreEl = document.getElementById('finalScore'), claimTokensBtn = document.getElementById('claimTokensBtn'), playAgainBtn = document.getElementById('playAgainBtn'), claimStatus = document.getElementById('claimStatus'), backToLobbyBtn = document.getElementById('backToLobbyBtn'), launchSound = document.getElementById('launchSound'), sliceSound = document.getElementById('sliceSound');
+    const lobbyContainer = document.getElementById('lobby-container'), gameContainer = document.getElementById('game-container'), connectWalletBtn = document.getElementById('connectWalletBtn'), gmBtn = document.getElementById('gmBtn'), playerAddressEl = document.getElementById('playerAddress'), wokeBalanceEl = document.getElementById('wokeBalance'), controlsSection = document.getElementById('controls-section'), leaderboardLoadingEl = document.getElementById('leaderboard-loading'), leaderboardListEl = document.getElementById('leaderboard-list'), startGameBtn = document.getElementById('startGameBtn'), canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d'), countdownEl = document.getElementById('countdown'), scoreDisplay = document.getElementById('scoreDisplay'), highScoreDisplay = document.getElementById('highScoreDisplay'), gameOverModal = document.getElementById('gameOverModal'), finalScoreEl = document.getElementById('finalScore'), claimTokensBtn = document.getElementById('claimTokensBtn'), playAgainBtn = document.getElementById('playAgainBtn'), claimStatus = document.getElementById('claimStatus'), backToLobbyBtn = document.getElementById('backToLobbyBtn'), launchSound = document.getElementById('launchSound'), sliceSound = document.getElementById('sliceSound');
 
     // Image & Asset Loading
     const images = {};
@@ -63,31 +63,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Lobby Logic
     async function onWalletConnected() {
         connectWalletBtn.style.display = 'none';
-        disconnectWalletBtn.classList.remove('hidden');
         const formattedAddress = `${userAccount.substring(0, 6)}...${userAccount.substring(userAccount.length - 4)}`;
         playerAddressEl.textContent = `Player: ${formattedAddress}`;
-        playerAddressEl.classList.remove('hidden'); 
-        wokeBalanceEl.classList.remove('hidden'); 
-        controlsSection.classList.remove('hidden');
+        playerAddressEl.classList.remove('hidden'); wokeBalanceEl.classList.remove('hidden'); controlsSection.classList.remove('hidden');
         updateWokeBalance(wokeBalanceEl);
         getOnChainHighScore().then(hs => { highScore = hs; highScoreDisplay.textContent = `High Score: ${highScore}`; });
         leaderboardLoadingEl.style.display = 'block';
         const topScores = await getTopHighScores(10);
         leaderboardLoadingEl.style.display = 'none';
         populateLeaderboard(topScores);
-    }
-
-    function onWalletDisconnected() {
-        connectWalletBtn.style.display = 'block';
-        disconnectWalletBtn.classList.add('hidden');
-        playerAddressEl.classList.add('hidden');
-        wokeBalanceEl.classList.add('hidden');
-        controlsSection.classList.add('hidden');
-        playerAddressEl.textContent = '';
-        wokeBalanceEl.textContent = 'Balance: Not Connected';
-        leaderboardLoadingEl.style.display = 'block';
-        leaderboardListEl.innerHTML = '<li>Please connect wallet to view scores.</li>';
-        leaderboardLoadingEl.style.display = 'none';
     }
 
     // Game Logic & Classes
@@ -353,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Listeners
     connectWalletBtn.addEventListener('click', () => connectWallet(onWalletConnected));
-    disconnectWalletBtn.addEventListener('click', () => disconnectWallet(onWalletDisconnected));
     gmBtn.addEventListener('click', () => handleGm(gmBtn));
     startGameBtn.addEventListener('click', startCountdown);
     canvas.addEventListener('mousedown', startSlash);
