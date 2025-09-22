@@ -26,27 +26,27 @@ async function switchNetwork() {
 }
 
 export async function connectWallet(onConnectedCallback) {
+    console.log("Attempting to connect wallet...");
     if (typeof window.ethereum === 'undefined') {
+        console.log("MetaMask not detected");
         return alert('Please install MetaMask to play!');
     }
-
     try {
+        console.log("Requesting accounts...");
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         userAccount = accounts[0];
-
         provider = new ethers.BrowserProvider(window.ethereum);
         const network = await provider.getNetwork();
         if (network.chainId !== BigInt(somniaNetwork.chainId)) {
+            console.log("Switching network to Somnia Mainnet...");
             await switchNetwork();
         }
-        
         signer = await provider.getSigner();
         contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-        // Notify script.js that the connection was successful
+        console.log("Wallet connected successfully");
         onConnectedCallback();
     } catch (error) {
-        console.error("Error connecting wallet:", error);
+        console.error("Connection error:", error);
         alert('Failed to connect wallet. Please check the console for details.');
     }
 }
@@ -55,14 +55,13 @@ export async function disconnectWallet() {
     if (!provider || !userAccount) {
         return alert('No wallet is currently connected.');
     }
-
     try {
         // Clear global variables
         provider = null;
         signer = null;
         contract = null;
         userAccount = null;
-
+        console.log("Wallet disconnected successfully");
         // Notify user
         alert('Wallet disconnected successfully.');
     } catch (error) {
@@ -101,7 +100,6 @@ export async function handleGm(gmBtn) {
     if (!contract) {
         return alert("Please connect your wallet first.");
     }
-
     gmBtn.disabled = true;
     gmBtn.textContent = 'Sending...';
     try {
