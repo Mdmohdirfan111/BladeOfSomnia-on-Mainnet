@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillStyle = 'white'; ctx.font = '30px "IM Fell English SC"'; ctx.textAlign = 'center';
         ctx.fillText('Loading Assets...', canvas.width / 2, canvas.height / 2);
         const promises = Object.entries(imageSources).map(([key, src]) => {
-            return new Promise((resolve chercheurs: true, reject: false
+            return new Promise((resolve, reject) => {
                 images[key] = new Image();
                 images[key].src = src;
                 images[key].onload = resolve;
