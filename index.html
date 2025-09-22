@@ -20,8 +20,12 @@
             <main class="content-area">
                 <div id="wallet-section" class="card">
                     <button id="connectWalletBtn">Connect Wallet</button>
-                    <p id="playerAddress" class="hidden"></p>
-                    <p id="wokeBalance" class="hidden"></p>
+                    
+                    <div id="wallet-info" class="hidden">
+                        <p id="playerAddress"></p>
+                        <p id="wokeBalance"></p>
+                        <button id="disconnectWalletBtn">Disconnect</button>
+                    </div>
                 </div>
 
                 <div id="controls-section" class="card hidden">
@@ -43,7 +47,7 @@
                         <li><a href="https://discord.gg/somnia" target="_blank" rel="noopener noreferrer">Join Discord</a></li>
                     </ul>
                 </div>
-                </main>
+            </main>
         </div>
     </div>
 
