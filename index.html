@@ -4,78 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blade of Somnia</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'IM Fell English SC', serif; background: black; color: white; overflow: hidden; }
+        #lobby-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        #game-container { display: none; position: relative; }
+        canvas { display: block; }
+        #countdown { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 48px; }
+        #scoreDisplay, #highScoreDisplay { position: absolute; top: 10px; font-size: 24px; }
+        #scoreDisplay { left: 10px; } #highScoreDisplay { right: 10px; }
+        #gameOverModal { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 10px; text-align: center; }
+        .hidden { display: none; }
+        button { font-family: 'IM Fell English SC', serif; font-size: 18px; padding: 10px 20px; margin: 10px; cursor: pointer; background: #333; color: white; border: none; border-radius: 5px; }
+        button:hover { background: #555; }
+        #controls-section { display: none; }
+        #leaderboard-loading { display: none; }
+        #leaderboard-list { list-style: none; padding: 0; }
+        #leaderboard-list li { margin: 5px 0; }
+        #playerAddress, #wokeBalance { margin: 10px; font-size: 18px; }
+    </style>
 </head>
 <body>
-
     <div id="lobby-container">
-        <div class="main-container">
-            <header class="game-title">
-                <h1>Blade of Somnia</h1>
-            </header>
-
-            <main class="content-area">
-                <div id="wallet-section" class="card">
-                    <button id="connectWalletBtn">Connect Wallet</button>
-                    
-                    <div id="wallet-info" class="hidden">
-                        <p id="playerAddress"></p>
-                        <p id="wokeBalance"></p>
-                        <button id="disconnectWalletBtn">Disconnect</button>
-                    </div>
-                </div>
-
-                <div id="controls-section" class="card hidden">
-                    <button id="gmBtn">GM On-chain</button>
-                    <button id="startGameBtn">Start Slashing!</button>
-                </div>
-
-                <div id="leaderboard-section" class="card">
-                    <h2>Top Slashers</h2>
-                    <div id="leaderboard-loading">Loading high scores...</div>
-                    <ol id="leaderboard-list"></ol>
-                </div>
-
-                <div class="card social-links-card">
-                    <p class="developer-credit">Developed by Irfan.eth</p>
-                    <ul>
-                        <li><a href="https://x.com/Irrfan_eth" target="_blank" rel="noopener noreferrer">Follow Irfan</a></li>
-                        <li><a href="https://x.com/Somnia_Network" target="_blank" rel="noopener noreferrer">Follow Somnia</a></li>
-                        <li><a href="https://discord.gg/somnia" target="_blank" rel="noopener noreferrer">Join Discord</a></li>
-                    </ul>
-                </div>
-            </main>
+        <h1>Blade of Somnia</h1>
+        <div>
+            <button id="connectWalletBtn">Connect Wallet</button>
+            <button id="disconnectWalletBtn" class="hidden">Disconnect Wallet</button>
+            <p id="playerAddress" class="hidden"></p>
+            <p id="wokeBalance" class="hidden">Balance: 0 $WOKE</p>
+        </div>
+        <div id="controls-section" class="hidden">
+            <button id="gmBtn">GM On-chain</button>
+            <button id="startGameBtn">Start Slashing!</button>
+        </div>
+        <div>
+            <h2>Top Slashers</h2>
+            <p id="leaderboard-loading">Loading high scores...</p>
+            <ul id="leaderboard-list"></ul>
+        </div>
+        <div>
+            <p>Developed by Irfan.eth</p>
+            <a href="https://x.com/irfan" target="_blank">Follow Irfan</a> |
+            <a href="https://x.com/somnia" target="_blank">Follow Somnia</a> |
+            <a href="https://discord.com/somnia" target="_blank">Join Discord</a>
         </div>
     </div>
-
-    <div id="game-container" class="hidden">
+    <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         <div id="countdown" class="hidden"></div>
-        <div class="ui-overlay">
-            <div id="scoreDisplay" class="game-stat">Score: 0</div>
-            <div id="highScoreDisplay" class="game-stat">High Score: 0</div>
-        </div>
-        <div id="gameOverModal" class="modal-overlay hidden">
-            <div class="card modal-content">
-                <h2 class="modal-title">WOKE UP!</h2>
-                <p class="final-score">Final Score: <span id="finalScore">0</span></p>
-                <div class="modal-buttons">
-                    <button id="claimTokensBtn">Claim $WOKE</button>
-                    <button id="playAgainBtn">Play Again</button>
-                </div>
-                <p id="claimStatus" class="claim-status"></p>
-                <button id="backToLobbyBtn" class="back-link">Back to Lobby</button>
-            </div>
+        <div id="scoreDisplay">Score: 0</div>
+        <div id="highScoreDisplay">High Score: 0</div>
+        <div id="gameOverModal" class="hidden">
+            <h2>WOKE UP!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button id="claimTokensBtn">Claim $WOKE</button>
+            <button id="playAgainBtn">Play Again</button>
+            <p id="claimStatus"></p>
+            <button id="backToLobbyBtn">Back to Lobby</button>
         </div>
     </div>
-
-    <audio id="launchSound" src="launch.mp3" preload="auto"></audio>
-    <audio id="sliceSound" src="slice.mp3" preload="auto"></audio>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <audio id="launchSound" src="launch.mp3"></audio>
+    <audio id="sliceSound" src="slice.mp3"></audio>
     <script type="module" src="script.js"></script>
 </body>
 </html>
